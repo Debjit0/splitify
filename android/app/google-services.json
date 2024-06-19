@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "690920929191",
+    "project_id": "splitify-a0dee",
+    "storage_bucket": "splitify-a0dee.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:690920929191:android:085f66b2f5490f3010a882",
+        "android_client_info": {
+          "package_name": "com.example.splitify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6ZAK2RJ3P4rRq-x0OjGG8Ee_GHRfo7U4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
