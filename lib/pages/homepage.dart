@@ -1,10 +1,13 @@
+// home_page.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/get_navigation.dart';
+import 'package:get/get.dart';
+import 'package:splitify/Components/groupcard.dart';
+import 'package:splitify/Models/groupmodel.dart';
+
 import 'package:splitify/Services/firebaseServices.dart';
-import 'package:splitify/pages/creategroup.dart';
+import 'package:splitify/Pages/creategroup.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -58,17 +61,37 @@ class GroupList extends StatelessWidget {
           return Center(child: Text('No groups found.'));
         }
 
-        final groups = snapshot.data!.docs;
+        final groupDocs = snapshot.data!.docs;
 
         return ListView.builder(
-          itemCount: groups.length,
+          itemCount: groupDocs.length,
           itemBuilder: (context, index) {
-            var group = groups[index];
-            return ListTile(
-              title: Text(group['name']),
-              subtitle: Text(group['description']),
-              onTap: () {
-                // Navigate to group details page
+            var group = GroupModel.fromFirestore(
+                groupDocs[index].data() as Map<String, dynamic>,
+                groupDocs[index].id);
+
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(group.createdBy)
+                  .get(),
+              builder: (context, userSnapshot) {
+                if (userSnapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                  return Center(child: Text('User not found.'));
+                }
+
+                // var createdByUser = UserModel.fromFirestore(
+                //     userSnapshot.data!.data() as Map<String, dynamic>,
+                //     userSnapshot.data!.id);
+
+                return GroupCard(
+                    groupId: group.id,
+                    groupName: group.name,
+                    groupDescription: group.description,
+                    createdByUser: group.createdBy);
               },
             );
           },

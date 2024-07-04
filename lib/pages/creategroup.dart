@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/get_navigation.dart';
-import 'package:splitify/Services/firebaseServices.dart';
-import 'package:splitify/pages/homepage.dart';
+import 'package:splitify/Models/groupmodel.dart';
+import 'package:splitify/Models/usermodel.dart';
+
 
 class CreateGroupPage extends StatefulWidget {
   @override
@@ -14,11 +13,10 @@ class CreateGroupPage extends StatefulWidget {
 class _CreateGroupPageState extends State<CreateGroupPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _groupNameController = TextEditingController();
-  final TextEditingController _groupDescriptionController =
-      TextEditingController();
+  final TextEditingController _groupDescriptionController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  List<Map<String, dynamic>> _selectedUsers = [];
-  List<Map<String, dynamic>> _searchResults = [];
+  List<UserModel> _selectedUsers = [];
+  List<UserModel> _searchResults = [];
   User? currentUser = FirebaseAuth.instance.currentUser;
 
   @override
@@ -88,13 +86,8 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     setState(() {
       _searchResults = querySnapshot.docs
           .where((doc) => doc.id != currentUser!.uid) // Exclude current user
-          .map((doc) {
-        return {
-          'id': doc.id,
-          'name': doc['name'],
-          'email': doc['email'],
-        };
-      }).toList();
+          .map((doc) => UserModel.fromFirestore(doc.data(), doc.id))
+          .toList();
     });
   }
 
@@ -103,10 +96,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       itemCount: _searchResults.length,
       itemBuilder: (context, index) {
         var user = _searchResults[index];
-        bool isSelected = _selectedUsers.any((u) => u['id'] == user['id']);
+        bool isSelected = _selectedUsers.any((u) => u.id == user.id);
         return ListTile(
-          title: Text(user['name']),
-          subtitle: Text(user['email']),
+          title: Text(user.name),
+          subtitle: Text(user.email),
           trailing: isSelected
               ? Icon(Icons.check, color: Colors.green)
               : ElevatedButton(
@@ -125,11 +118,20 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   Future<void> _createGroup() async {
     if (_formKey.currentState!.validate()) {
       List<String> memberIds = [currentUser!.uid];
-      memberIds.addAll(_selectedUsers.map((user) => user['id'] as String));
+      memberIds.addAll(_selectedUsers.map((user) => user.id));
 
-      FirebaseServices().createGroup(_groupDescriptionController.text, _groupDescriptionController.text, memberIds, currentUser!.uid);
+      GroupModel group = GroupModel(
+        id: '', // Firestore will generate this
+        name: _groupNameController.text,
+        description: _groupDescriptionController.text,
+        members: memberIds,
+        createdBy: currentUser!.uid,
+        createdAt: DateTime.now(),
+      );
 
-      Get.offAll(HomePage());
+      await FirebaseFirestore.instance.collection('groups').add(group.toFirestore());
+
+      Navigator.pop(context);
     }
   }
 }

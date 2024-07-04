@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/get_navigation.dart';
+import 'package:splitify/Models/usermodel.dart';
 import 'package:splitify/pages/homepage.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -26,8 +25,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
       try {
         // Create user with Firebase Authentication
-        UserCredential userCredential =
-            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
@@ -35,17 +33,21 @@ class _SignUpPageState extends State<SignUpPage> {
         User? user = userCredential.user;
 
         if (user != null) {
-          // Store additional user information in Firestore
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .set({
-            'name': _nameController.text.trim(),
-            'email': _emailController.text.trim(),
-          });
+          // Create user model
+          UserModel userModel = UserModel(
+            id: user.uid,
+            name: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+          );
 
-          // Navigate to the next screen or show a success message
-          Get.offAll(HomePage());
+          // Store additional user information in Firestore
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set(userModel.toFirestore());
+
+          // Navigate to the home screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomePage()), // Define HomePage widget
+          );
         }
       } on FirebaseAuthException catch (e) {
         // Handle errors

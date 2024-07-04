@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
-import 'package:splitify/pages/homepage.dart';
-import 'package:splitify/pages/signin.dart';
+import 'package:splitify/Pages/homepage.dart';
+import 'package:splitify/Pages/signin.dart';
 
 class SplashScreen extends StatefulWidget {
   @override

@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/get_navigation.dart';
-import 'package:splitify/pages/signin.dart';
+import 'package:splitify/Models/expensemodel.dart';
+import 'package:splitify/Pages/signin.dart';
 
 class FirebaseServices {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -19,5 +20,11 @@ class FirebaseServices {
         'createdBy': createdBy,
         'createdAt': FieldValue.serverTimestamp(),
       });
+  }
+
+  void saveExpense(ExpenseModel expense) {
+    Map<String, dynamic> expenseMap = expense.toMap();
+
+    FirebaseFirestore.instance.collection('expenses').add(expenseMap);
   }
 }
