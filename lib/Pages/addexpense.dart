@@ -217,7 +217,6 @@
 //   }
 // }
 
-
 // import 'dart:ffi';
 // import 'package:flutter/material.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
@@ -563,9 +562,11 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           Expanded(
                             flex: 2,
                             child: TextFormField(
-                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              keyboardType: TextInputType.numberWithOptions(
+                                  decimal: true),
                               onChanged: (value) {
-                                _participantShares[index] = double.tryParse(value) ?? 0.0;
+                                _participantShares[index] =
+                                    double.tryParse(value) ?? 0.0;
                               },
                             ),
                           ),
@@ -592,14 +593,20 @@ class _AddExpensePageState extends State<AddExpensePage> {
     String description = _descriptionController.text.trim();
     double amount = double.tryParse(_amountController.text.trim()) ?? 0.0;
 
-    if (description.isEmpty || amount <= 0 || _paidByUserId.isEmpty || _selectedParticipants.isEmpty) {
+    if (description.isEmpty ||
+        amount <= 0 ||
+        _paidByUserId.isEmpty ||
+        _selectedParticipants.isEmpty) {
       return;
     }
 
     // Prepare expense data
-    List<Map<String, dynamic>> participantsData = _selectedParticipants.map((participant) {
+    List<Map<String, dynamic>> participantsData =
+        _selectedParticipants.map((participant) {
       int index = _selectedParticipants.indexOf(participant);
-      double share = _splitEqually ? amount / _selectedParticipants.length : amount * _participantShares[index];
+      double share = _splitEqually
+          ? amount / _selectedParticipants.length
+          : amount * _participantShares[index];
       return {
         'userId': participant['id'],
         'share': share,
@@ -615,7 +622,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
       'createdAt': FieldValue.serverTimestamp(),
     };
 
-    Map<String, double> toGetMap = {};
+    Map<String, dynamic> toRecieveMap = {};
 
     // Set the values in the map
     for (var participant in _selectedParticipants) {
@@ -624,32 +631,37 @@ class _AddExpensePageState extends State<AddExpensePage> {
           : _participantShares[_selectedParticipants.indexOf(participant)];
 
       if (participant['id'] == _paidByUserId) {
-        toGetMap[participant['id']] = 0.0;
+        toRecieveMap[participant['id']] = 0.0;
       } else {
-        toGetMap[participant['id']] = individualShare;
+        toRecieveMap[participant['id']] = individualShare;
       }
     }
-    print("$toGetMap to get map");
+    
+
+    toRecieveMap.addAll(expenseData);
+    print("$toRecieveMap to get map");
 
     // Uncomment the following code to enable Firestore updates
-    // try {
-    //   // Update expenses collection
-    //   DocumentReference docRef = await FirebaseFirestore.instance.collection('expenses').add(expenseData);
-    //
-    //   // Update balances collection based on the new expense
-    //   await _updateBalances(expenseData);
-    //
-    //   // Navigate back to previous screen
-    //   Navigator.pop(context);
-    // } catch (e) {
-    //   print('Error adding expense: $e');
-    //   // Handle error
-    // }
+    try {
+      // Update expenses collection
+      await FirebaseFirestore.instance.collection('expenses').add(expenseData);
+      await FirebaseFirestore.instance.collection('torecieve').add(toRecieveMap);
+    
+      // Update balances collection based on the new expense
+      //await _updateBalances(expenseData);
+    
+      // Navigate back to previous screen
+      Navigator.pop(context);
+    } catch (e) {
+      print('Error adding expense: $e');
+      // Handle error
+    }
   }
 
   Future<void> _updateBalances(Map<String, dynamic> expenseData) async {
     double totalAmount = expenseData['amount'];
-    List<Map<String, dynamic>> participants = List<Map<String, dynamic>>.from(expenseData['participants']);
+    List<Map<String, dynamic>> participants =
+        List<Map<String, dynamic>>.from(expenseData['participants']);
     String paidByUserId = expenseData['paidByUserId'];
 
     // Create a batch for Firestore writes
@@ -663,13 +675,21 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
       // Update balance of paidByUserId (negative for amount paid)
       batch.set(
-        FirebaseFirestore.instance.collection('balances').doc(widget.groupId).collection(paidByUserId).doc(userId),
+        FirebaseFirestore.instance
+            .collection('balances')
+            .doc(widget.groupId)
+            .collection(paidByUserId)
+            .doc(userId),
         {'amount': FieldValue.increment(-amount)},
       );
 
       // Update balance of participant (positive for amount owed)
       batch.set(
-        FirebaseFirestore.instance.collection('balances').doc(widget.groupId).collection(userId).doc(paidByUserId),
+        FirebaseFirestore.instance
+            .collection('balances')
+            .doc(widget.groupId)
+            .collection(userId)
+            .doc(paidByUserId),
         {'amount': FieldValue.increment(amount)},
       );
     });
@@ -680,3 +700,4 @@ class _AddExpensePageState extends State<AddExpensePage> {
 }
 
 
+//to recieve kinda done now sort the to recieve and then display the balances
